@@ -1,17 +1,22 @@
 const { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const pino = require('pino');
-const qrcode = require('qrcode');
 const express = require('express');
+const bodyParser = require('body-parser');
 const config = require('./config');
 const { startBot } = require('./main');
 
+let QRCode;
+try { QRCode = require('qrcode'); } catch(e) { console.log("Run: npm i qrcode") }
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.use(bodyParser.urlencoded({ extended: true }));
 
 let sock;
 let qrCode = null;
 let pairCode = null;
 let isConnected = false;
+let lastPhone = '';
 
 async function connectToWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState(config.sessionName);
@@ -21,7 +26,7 @@ async function connectToWhatsApp() {
     version,
     auth: state,
     logger: pino({ level: 'silent' }),
-    browser: [config.botName, 'Safari', '1.0.0'], // <- Shows as DARK-EYE-OFC TECH
+    browser: [config.botName, 'Safari', '1.0.0'],
     printQRInTerminal: false
   });
   
@@ -30,88 +35,89 @@ async function connectToWhatsApp() {
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
     
-    if (qr) {
-      qrCode = await qrcode.toDataURL(qr); // save QR as image for web
+    if (qr && QRCode) {
+      qrCode = await QRCode.toDataURL(qr);
       pairCode = null;
-      console.log('New QR generated. Go to / to scan');
     }
     
     if (connection === 'open') {
       isConnected = true;
       qrCode = null;
       pairCode = null;
-      console.log(`${config.botName} connected successfully!`); // <- Bot name in logs
+      console.log(`${config.botName} connected successfully!`);
       await startBot(sock);
     } else if (connection === 'close') {
       isConnected = false;
       const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-      console.log('Connection closed. Reconnecting:', shouldReconnect);
-      if (shouldReconnect) {
-        setTimeout(() => connectToWhatsApp(), 5000);
-      }
+      if (shouldReconnect) setTimeout(() => connectToWhatsApp(), 5000);
     }
   });
-  
-  // Request pair code function
-  sock.requestPair = async () => {
-    if (!state.creds.registered) {
-      const number = config.ownerNumber.replace(/[^0-9]/g, '');
-      if (number) {
-        try {
-          pairCode = await sock.requestPairingCode(number);
-          qrCode = null;
-          console.log(`Pair code: ${pairCode}`);
-          return pairCode;
-        } catch (e) {
-          console.log('Pair code error:', e.message);
-          return null;
-        }
-      }
-    }
-    return null;
-  }
 }
 
 // WEB DASHBOARD
 app.get('/', (req, res) => {
   res.send(`
     <html>
-      <head><title>${config.botName} Dashboard</title>
+      <head><title>AWESOME-MD Dashboard</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
-        body { font-family: Arial; background: #111; color: #fff; text-align: center; padding: 50px; }
-        button { padding: 15px 30px; margin: 10px; font-size: 18px; border: none; border-radius: 10px; cursor: pointer; }
-        .qr { background: #25D366; color: #fff; }
-        .pair { background: #075E54; color: #fff; }
-        img { margin-top: 20px; background: #fff; padding: 10px; border-radius: 10px; }
-        .code { font-size: 32px; letter-spacing: 5px; margin: 20px; color: #25D366; }
+        body { font-family: Arial; background: #0a0a0a; color: #fff; text-align: center; padding: 20px; }
+        .container { max-width: 500px; margin: auto; background: #1a1a1a; padding: 30px; border-radius: 20px; }
+        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #2a2a2a; color: #fff; font-size: 16px; text-align: center; }
+        button { padding: 15px 30px; margin: 10px; font-size: 16px; border: none; border-radius: 10px; cursor: pointer; width: 90%; font-weight: bold; }
+        .qr { background: #25D366; color: #000; }
+        .pair { background: #128C7E; color: #fff; }
+        img { margin-top: 20px; background: #fff; padding: 15px; border-radius: 10px; max-width: 280px; }
+        .code { font-size: 32px; letter-spacing: 5px; margin: 20px; color: #25D366; font-weight: bold; }
+        h1 { color: #25D366; }
       </style>
       </head>
       <body>
-        <h1>${config.botName}</h1>
+        <div class="container">
+        <h1>AWESOME-MD</h1>
         <p>Status: ${isConnected ? '✅ Connected' : '❌ Not Connected'}</p>
         
         ${!isConnected ? `
-        <button class="qr" onclick="window.location.href='/qr'">Get QR Code</button>
-        <button class="pair" onclick="window.location.href='/pair'">Get Pair Code</button>
+        <form action="/qr" method="POST">
+          <p>Click here to get QR code</p>
+          <input type="text" name="number" placeholder="Enter your number: 26378XXXXXXX" required/>
+          <button class="qr" type="submit">Get QR Code</button>
+        </form>
+
+        <form action="/pair" method="POST">
+          <p>Click here to get Pair Code</p>
+          <input type="text" name="number" placeholder="Enter your number: 26378XXXXXXX" required/>
+          <button class="pair" type="submit">Get Pair Code</button>
+        </form>
         ` : '<h2>Bot is Online</h2>'}
         
-        ${qrCode ? `<h3>Scan this QR:</h3><img src="${qrCode}" width="300"/>` : ''}
-        ${pairCode ? `<h3>Enter this code:</h3><div class="code">${pairCode}</div><p>WhatsApp > 3 dots > Linked Devices</p>` : ''}
+        ${qrCode ? `<h3>Scan this QR:</h3><img src="${qrCode}"/>` : ''}
+        ${pairCode ? `<h3>Enter this code on WhatsApp:</h3><div class="code">${pairCode}</div>` : ''}
         
-        <p style="margin-top:50px; opacity:0.5;">Reminder: DARK-EYEE</p>
+        <p style="margin-top:30px; opacity:0.5;">For you + your friends</p>
+        </div>
       </body>
     </html>
   `);
 });
 
-app.get('/qr', (req, res) => {
-  if (!qrCode) res.redirect('/');
-  else res.redirect('/');
+app.post('/qr', async (req, res) => {
+  lastPhone = req.body.number.replace(/[^0-9]/g, '');
+  // QR auto generates on connection, so we just restart socket
+  if(sock) await sock.ws.close();
+  res.redirect('/');
 });
 
-app.get('/pair', async (req, res) => {
+app.post('/pair', async (req, res) => {
+  const number = req.body.number.replace(/[^0-9]/g, '');
+  lastPhone = number;
   if (sock && !isConnected) {
-    await sock.requestPair();
+    try {
+      pairCode = await sock.requestPairingCode(number);
+      qrCode = null;
+    } catch (e) {
+      console.log('Pair error:', e.message);
+    }
   }
   res.redirect('/');
 });
