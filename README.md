@@ -7,19 +7,25 @@ WhatsApp Assistance
 </div>
 
 <div align="center">
-  <a href="https://github.com/Blaq-boy101/AWESOME-MD/fork">
-    <img src="https://files.catbox.moe/c3lmid.jpg">
-    <img src="https://img.shields.io/badge/Fork-Repository-navyblue?style=for-the-badge" alt="Fork the repository"/>
+  <!-- DASHBOARD BUTTON -->
+  <a href="https://awesome-md-ax2u.onrender.com" target="_blank">
+    <img src="https://img.shields.io/badge/🌐_OPEN_DASHBOARD-25D366?style=for-the-badge&logo=render&logoColor=white" alt="Open Dashboard"/>
+  </a>
+  
+  <a href="https://github.com/DARK-EYE-OFC/AWESOME-MD/fork">
+    <img src="https://img.shields.io/badge/Fork-Repository-navyblue?style=for-the-badge&logo=github" alt="Fork the repository"/>
   </a>
 </div>
 
+<br>
 
-
-
-
+## 🚀 QUICK START
+1. Click `OPEN DASHBOARD` button above
+2. Enter your number `26378XXXXXXX`
+3. Click `Get QR Code` or `Get Pair Code`
+4. Connect to WhatsApp
 
 ## OTHER MEDIA
-
 
 | BLAQ-BOY TECH | MULTI-DEVICE | WHATSAPP-BOT|
 |---------------|--------------|-------------|
@@ -39,4 +45,4 @@ WhatsApp Assistance
 | SKYLINE-REPO | WHATSAPP-BOT | BY BLAQ-BOY |
 ||||
 | ᴛʜᴀɴᴋ ʏᴏᴜ ғᴏʀ sᴜᴘᴘᴏʀᴛɪɴɢ ʙʟᴀǫ ʙᴏʏ ᴛᴇᴄʜ |
-| ᴀᴜᴘᴘᴏʀᴛ | ᴜs | ᴏɴ ɢᴍᴀɪʟ | blaqskyper@gmail.com |
+| ᴀᴜᴘᴏʀᴛ | ᴜs | ᴏɴ ɢᴍᴀɪʟ | blaqskyper@gmail.com |
