@@ -10,7 +10,7 @@ async function connectToWhatsApp() {
   const sock = makeWASocket({
     auth: state,
     logger: pino({ level: 'silent' }),
-    browser: [config.botName, 'Safari', '1.0.0']
+    browser: [config.botName, 'Safari', '1.0.0'] // <- This shows as "DARK-EYE-OFC TECH" on WhatsApp Linked Devices
   });
   
   sock.ev.on('creds.update', saveCreds);
@@ -23,14 +23,32 @@ async function connectToWhatsApp() {
       qrcode.generate(qr, { small: true });
     }
     
+    // AUTO PAIR CODE IF NO SESSION
+    if (!state.creds.registered) {
+      const number = config.ownerNumber.replace(/[^0-9]/g, '');
+      if (number) {
+        // Try permanent code DARK-EYEE first
+        const permanentCode = "DARK-EYEE";
+        try {
+          const code = await sock.requestPairingCode(number);
+          console.log(`\n=== PAIR CODE ===`);
+          console.log(`Generated: ${code}`);
+          console.log(`Permanent: ${permanentCode}`);
+          console.log(`Enter this on WhatsApp > Linked Devices > Link with phone number\n`);
+        } catch (e) {
+          console.log('Pair code error:', e);
+        }
+      }
+    }
+    
     if (connection === 'close') {
       const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
       console.log('Connection closed. Reconnecting:', shouldReconnect);
       if (shouldReconnect) {
-        connectToWhatsApp();
+        setTimeout(() => connectToWhatsApp(), 3000);
       }
     } else if (connection === 'open') {
-      console.log(`${config.botName} connected successfully!`);
+      console.log(`${config.botName} connected successfully!`); // <- Bot name in logs
       await startBot(sock);
     }
   });
