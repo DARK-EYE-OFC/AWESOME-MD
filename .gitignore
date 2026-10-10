@@ -5,7 +5,7 @@ yarn-debug.log*
 yarn-error.log*
 .env
 .env.local
-
+*.json
 ### AL ###
 #Template for AL projects for Dynamics 365 Business Central
 #launch.json folder
